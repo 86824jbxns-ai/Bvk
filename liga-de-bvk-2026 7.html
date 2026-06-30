@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga de BVK 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB6q695phog9j8BwncSXo4JfIwOqRLDpPI",
+    authDomain: "liga-de-bvk.firebaseapp.com",
+    databaseURL: "https://liga-de-bvk-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "liga-de-bvk",
+    storageBucket: "liga-de-bvk.firebasestorage.app",
+    messagingSenderId: "1052517432700",
+    appId: "1:1052517432700:web:ac0c58bd6113dba09b78f9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const dbRef = db.ref('bvk2026');
+
+  window._fbSet = (data) => dbRef.set(data);
+  window._fbOnValue = (cb) => dbRef.on('value', snap => cb(snap.val() || {}));
+
+  // Listen for changes and re-render
+  window._fbData = {}; // default until Firebase responds
+  dbRef.on('value', snap => {
+    window._fbData = snap.val() || {};
+    if (window._appReady && typeof renderAll === 'function') renderAll();
+  }, err => {
+    console.error('Firebase read error:', err);
+  });
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --jaune: #FFD700;
+    --jaune-deep: #E6B800;
+    --noir: #0A0A0A;
+    --gris: #1A1A1A;
+    --gris-mid: #2A2A2A;
+    --gris-light: #444;
+    --blanc: #F5F3EE;
+    --rouge: #E8002D;
+    --vert: #00A651;
+    --polka: #D4002B;
+
+    /* team colours */
+    --c-eivind: #FFD700;
+    --c-tore:   #E8002D;
+    --c-martin: #00A651;
+    --c-anders: #4A90D9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--noir);
+    color: var(--blanc);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--jaune);
+    color: var(--noir);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--noir);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .logo span { color: var(--rouge); }
+  nav { display: flex; gap: 0.25rem; }
+  nav button {
+    background: none;
+    border: 2px solid transparent;
+    color: var(--noir);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  nav button:hover, nav button.active {
+    background: var(--noir);
+    color: var(--jaune);
+    border-color: var(--noir);
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── SECTION HEADING ── */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.05em;
+    color: var(--jaune);
+    border-left: 5px solid var(--rouge);
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+    margin-top: 2.5rem;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .subsection {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--jaune-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  /* ── PODIUM / STANDINGS ── */
+  .podium {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .podium-card {
+    background: var(--gris);
+    border-radius: 4px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    position: relative;
+    border-top: 4px solid var(--gris-light);
+    transition: transform 0.2s;
+  }
+  .podium-card:hover { transform: translateY(-2px); }
+  .podium-card.p1 { border-top-color: var(--jaune); }
+  .podium-card.p2 { border-top-color: #C0C0C0; }
+  .podium-card.p3 { border-top-color: #CD7F32; }
+  .podium-card.p4 { border-top-color: var(--gris-light); }
+
+  .podium-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--gris-light);
+  }
+  .p1 .podium-rank { color: var(--jaune); }
+  .p2 .podium-rank { color: #C0C0C0; }
+  .p3 .podium-rank { color: #CD7F32; }
+
+  .podium-team {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--blanc);
+  }
+  .podium-pts {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--jaune);
+  }
+  .podium-diff {
+    font-size: 0.75rem;
+    color: var(--gris-light);
+    margin-top: 0.25rem;
+    font-family: 'Space Mono', monospace;
+  }
+  .podium-wins {
+    font-size: 0.72rem;
+    color: #888;
+    margin-top: 0.4rem;
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+  /* ── TABLES ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+  .data-table th {
+    background: var(--gris-mid);
+    color: var(--jaune);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.6rem 0.75rem;
+    text-align: right;
+    border-bottom: 2px solid var(--jaune);
+  }
+  .data-table th:first-child { text-align: left; }
+  .data-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--gris-mid);
+    text-align: right;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+  }
+  .data-table td:first-child {
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    color: #aaa;
+    font-size: 0.82rem;
+  }
+  .data-table tr:hover td { background: var(--gris); }
+  .data-table .winner { color: var(--jaune); font-weight: 700; }
+  .data-table .rank1 { color: var(--jaune); }
+  .data-table .rank2 { color: #C0C0C0; }
+  .data-table .rank3 { color: #CD7F32; }
+  .data-table .rank4 { color: var(--gris-light); }
+
+  /* ── TABLE SCROLL WRAPPER ── */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 2rem; }
+  .table-scroll .data-table { margin-bottom: 0; }
+
+  /* ── CHARTS ── */
+  .chart-wrap {
+    background: var(--gris);
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .chart-wrap canvas { max-height: 320px; }
+
+  /* ── GRID 2-COL ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* ── INPUT PAGE ── */
+  .input-form {
+    background: var(--gris);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: end;
+    margin-bottom: 0.75rem;
+  }
+  .input-row label {
+    display: block;
+    font-size: 0.7rem;
+    color: #888;
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+  }
+  .input-row input {
+    background: var(--noir);
+    border: 1px solid var(--gris-light);
+    color: var(--blanc);
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 3px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .input-row input:focus {
+    outline: none;
+    border-color: var(--jaune);
+  }
+  .input-row input.etappe-nr {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--jaune);
+  }
+  .input-section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--jaune);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--gris-mid);
+  }
+  .team-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .tl-eivind { color: var(--c-eivind); }
+  .tl-tore   { color: var(--c-tore); }
+  .tl-martin { color: var(--c-martin); }
+  .tl-anders { color: var(--c-anders); }
+
+  .btn {
+    background: var(--jaune);
+    color: var(--noir);
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.65rem 1.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--jaune-deep); }
+  .btn-danger {
+    background: var(--rouge);
+    color: #fff;
+    margin-left: 0.5rem;
+  }
+  .btn-danger:hover { background: #c00022; }
+  .btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .etappe-type-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  .badge-Flat      { background: #2a4d2a; color: #aaeeaa; }
+  .badge-Kupert    { background: #5f4a1a; color: #ffcc66; }
+  .badge-Fjell     { background: #1a2a5f; color: #88aaff; }
+  .badge-Tempo     { background: #3d1a5f; color: #cc88ff; }
+  .badge-Lagtempo  { background: #1a3d3d; color: #88ffee; }
+
+
+  /* ── HISTORIKK ── */
+  .hist-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--gris-mid);
+    font-size: 0.85rem;
+  }
+  .hist-year {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--jaune);
+    width: 55px;
+    flex-shrink: 0;
+  }
+  .hist-bar-wrap { flex: 1; position: relative; }
+  .hist-bar {
+    height: 24px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--noir);
+    transition: width 0.6s ease;
+    min-width: 60px;
+  }
+
+  /* ── UTILITY ── */
+  .tag {
+    display: inline-block;
+    background: var(--gris-mid);
+    border-radius: 2px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+    font-family: 'Space Mono', monospace;
+    color: #aaa;
+    margin-left: 0.3rem;
+  }
+  .info-box {
+    background: var(--gris);
+    border-left: 3px solid var(--jaune);
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #aaa;
+    margin-bottom: 1rem;
+    border-radius: 0 3px 3px 0;
+  }
+  .info-box strong { color: var(--blanc); }
+
+  .ticker {
+    background: var(--rouge);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.3rem 1rem;
+    text-align: center;
+    letter-spacing: 0.08em;
+  }
+
+  .etappe-progress {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .ep-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--gris-mid);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .ep-dot.done { background: var(--jaune); }
+  .ep-dot.current { background: var(--rouge); transform: scale(1.4); }
+  .ep-dot:hover { transform: scale(1.3); }
+
+  /* ── BYTTEDETALJER ── */
+  .bytte-rad {
+    display: grid;
+    grid-template-columns: 130px 1fr 80px 1fr 80px 36px;
+    gap: 0.4rem;
+    align-items: end;
+    margin-bottom: 0.5rem;
+    background: var(--gris-mid);
+    padding: 0.6rem 0.75rem;
+    border-radius: 3px;
+    border-left: 3px solid var(--gris-light);
+  }
+  .bytte-rad.tl-eivind { border-left-color: var(--c-eivind); }
+  .bytte-rad.tl-tore   { border-left-color: var(--c-tore); }
+  .bytte-rad.tl-martin { border-left-color: var(--c-martin); }
+  .bytte-rad.tl-anders { border-left-color: var(--c-anders); }
+  .bytte-rad label { font-size:0.65rem; color:#888; font-family:'Space Mono',monospace; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:0.2rem; }
+  .bytte-rad input[type="text"], .bytte-rad input[type="number"] {
+    background: var(--noir);
+    border: 1px solid var(--gris-light);
+    color: var(--blanc);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 3px;
+    width: 100%;
+  }
+  .bytte-rad input:focus { outline:none; border-color:var(--jaune); }
+  .bytte-rad select {
+    background: var(--noir);
+    border: 1px solid var(--gris-light);
+    color: var(--blanc);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 3px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .bytte-rad select:focus { outline:none; border-color:var(--jaune); }
+  .bytte-rad .del-btn {
+    background: var(--rouge);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: end;
+  }
+  .effekt-positiv { color: #00cc66; font-weight:700; }
+  .effekt-negativ { color: #ff4444; font-weight:700; }
+  .effekt-nul     { color: #888; }
+
+  @media (max-width: 768px) {
+    .bytte-rad { grid-template-columns: 1fr 1fr; gap:0.4rem; }
+    .bytte-rad > div:first-child { grid-column: 1 / -1; }
+    .bytte-rad .del-btn { width:100%; }
+  }
+  @media (max-width: 768px) {
+    /* Header: logo + nav stacked */
+    header {
+      height: auto;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0.6rem 0.75rem 0;
+      gap: 0;
+    }
+    .logo {
+      font-size: 1.5rem;
+      padding-bottom: 0.4rem;
+    }
+    nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-top: 1px solid rgba(0,0,0,0.2);
+    }
+    nav button {
+      font-size: 0.65rem;
+      padding: 0.55rem 0.25rem;
+      border-radius: 0;
+      border-bottom: 3px solid transparent;
+      text-align: center;
+    }
+    nav button.active {
+      background: none;
+      color: var(--noir);
+      border-color: var(--noir);
+    }
+
+    /* Pages */
+    .page { padding: 1rem 0.75rem; }
+
+    /* Podium: 2x2 grid */
+    .podium { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .podium-card { padding: 1rem 0.75rem; }
+    .podium-rank { font-size: 2.2rem; }
+    .podium-pts { font-size: 1.1rem; }
+
+    /* Tables: horizontal scroll */
+    .data-table { font-size: 0.78rem; }
+    .data-table th, .data-table td { padding: 0.45rem 0.5rem; }
+
+    /* Charts shorter on mobile */
+    .chart-wrap canvas { max-height: 220px; }
+    .chart-wrap { padding: 0.75rem; }
+
+    /* Section titles smaller */
+    .section-title { font-size: 1.8rem; }
+
+    /* Input form: stack vertically, 2 fields per row */
+    .input-form { padding: 1rem; }
+    .input-row {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .input-row > div:first-child {
+      grid-column: 1 / -1;
+    }
+    .btn { width: 100%; margin-bottom: 0.5rem; }
+    .btn-danger { margin-left: 0; width: 100%; }
+
+    /* Grid2 always stacked */
+    .grid2 { grid-template-columns: 1fr; }
+
+    /* Etappe dots larger tap targets */
+    .ep-dot { width: 14px; height: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Liga <span>de</span> BVK <span style="color:#0A0A0A;font-size:1rem;font-weight:400;font-family:'Space Mono',monospace"> 2026</span></div>
+  <nav>
+    <button class="active" onclick="showPage('live')">🏆 Live</button>
+    <button onclick="showPage('statistikk')">📊 Statistikk</button>
+    <button onclick="showPage('historikk')">📜 Historikk</button>
+
+    <button onclick="showPage('input')">✏️ Legg inn</button>
+  </nav>
+</header>
+
+<div id="ticker" class="ticker">TOUR DE FRANCE 2026 · ETAPPE <span id="ticker-etappe">0</span> AV 21 · LEDER: <span id="ticker-leder">–</span></div>
+
+<!-- ════════════════ LIVE ════════════════ -->
+<div id="page-live" class="page active">
+  <div class="section-title">Sammenlagt</div>
+
+  <div class="etappe-progress" id="etappe-dots"></div>
+  <div class="podium" id="podium-cards"></div>
+
+  <div class="subsection">Gjenstående bytter (av 25)</div>
+  <div id="bytter-status"></div>
+
+  <div class="subsection">Poengutvikling — akkumulert</div>
+  <div class="chart-wrap"><canvas id="chart-akk"></canvas></div>
+
+  <div class="subsection">Poeng per etappe</div>
+  <div class="chart-wrap"><canvas id="chart-per-etappe"></canvas></div>
+
+  <div class="subsection">Prognose — forventet sluttpoeng</div>
+  <div id="prognose-cards"></div>
+  <div class="chart-wrap"><canvas id="chart-prognose"></canvas></div>
+
+  <div class="subsection">Tabelloversikt</div>
+  <div id="table-per-etappe"></div>
+</div>
+
+<!-- ════════════════ STATISTIKK ════════════════ -->
+<div id="page-statistikk" class="page">
+  <div class="section-title">Statistikk 2026</div>
+
+  <div class="subsection">Plassering per etappe</div>
+  <div id="table-plassering"></div>
+
+  <div class="subsection">Poeng per etappetype</div>
+  <div class="grid2">
+    <div class="chart-wrap"><canvas id="chart-type"></canvas></div>
+    <div id="table-type"></div>
+  </div>
+
+  <div class="subsection">Bytte-effektivitet</div>
+  <div class="chart-wrap"><canvas id="chart-bytter"></canvas></div>
+
+  <div class="subsection">Avstand til leder per etappe</div>
+  <div class="chart-wrap"><canvas id="chart-gap"></canvas></div>
+
+  <div class="subsection">Faktisk bytteeffekt (inn-rytter minus ut-rytter)</div>
+  <div id="tabell-bytteeffekt"></div>
+
+  <div class="subsection">Alle bytter denne sesongen</div>
+  <div id="tabell-alle-bytter"></div>
+
+  <div class="subsection">Plassering i hovedligaen (~7000 lag)</div>
+  <div class="chart-wrap"><canvas id="chart-liga-rank"></canvas></div>
+</div>
+
+<!-- ════════════════ HISTORIKK ════════════════ -->
+<div id="page-historikk" class="page">
+  <div class="section-title">Historikk 2021–2026</div>
+
+  <div class="subsection">Totale poeng per år</div>
+  <div class="chart-wrap"><canvas id="chart-hist-poeng"></canvas></div>
+
+  <div class="subsection">Ligaplasseringer per sesong (1.–4. plass)</div>
+  <div id="table-seirer"></div>
+
+  <div class="subsection">Dager i gult (ledende i ligaen)</div>
+  <div class="chart-wrap"><canvas id="chart-gult"></canvas></div>
+
+  <div class="subsection">Avstand til vinner – historisk</div>
+  <div id="table-avstand"></div>
+</div>
+
+
+<!-- ════════════════ INPUT ════════════════ -->
+<div id="page-input" class="page">
+  <div class="section-title">Legg inn etappepoeng</div>
+  <div class="info-box">Fyll inn poengene fra tourmanager.no etter hver etappe og trykk <strong>Lagre etappe</strong>. Data lagres i nettleseren din og er synlig i alle faner.</div>
+
+  <div class="subsection" style="margin-top:0">Hurtigimport — lim inn fra Claude</div>
+  <div class="input-form" style="margin-bottom:1rem">
+    <div class="info-box" style="margin-bottom:0.75rem">Last opp skjermbilde av etapperesultatet til Claude og be om importkode. Lim inn JSON-en her og trykk importer.</div>
+    <textarea id="import-json" placeholder='Lim inn JSON her, f.eks: {"etappe":1,"eivind":750,"tore":820,"martin":690,"anders":710,"rank_eivind":1250,...}' style="width:100%;height:80px;background:var(--noir);border:1px solid var(--gris-light);color:var(--blanc);font-family:'Space Mono',monospace;font-size:0.8rem;padding:0.6rem;border-radius:3px;resize:vertical"></textarea>
+    <button class="btn btn-sm" style="margin-top:0.5rem" onclick="importerJSON()">⬇️ Importer</button>
+    <span id="import-status" style="font-family:'Space Mono',monospace;font-size:0.75rem;margin-left:1rem;color:#888"></span>
+  </div>
+
+  <div class="subsection">Manuell registrering</div>
+
+  <div class="input-form">
+    <div class="input-section-label">Poeng fra ligaen</div>
+    <div class="input-row">
+      <div>
+        <label>Etappe</label>
+        <input type="number" id="in-etappe" min="1" max="21" class="etappe-nr" placeholder="1">
+      </div>
+      <div>
+        <label class="team-label tl-eivind">Eivinds Velocipedklub</label>
+        <input type="number" id="in-eivind" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-tore">Tores Tour</label>
+        <input type="number" id="in-tore" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-martin">Gruppetto le Martin</label>
+        <input type="number" id="in-martin" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-anders">Bike Trailers</label>
+        <input type="number" id="in-anders" placeholder="0">
+      </div>
+    </div>
+    <div class="input-section-label" style="margin-top:1rem">Plassering i hovedligaen (av ~7000)</div>
+    <div class="input-row">
+      <div style="visibility:hidden"><label>–</label><input type="text" disabled></div>
+      <div>
+        <label class="team-label tl-eivind">Eivinds Velocipedklub</label>
+        <input type="number" id="in-rank-eivind" placeholder="–">
+      </div>
+      <div>
+        <label class="team-label tl-tore">Tores Tour</label>
+        <input type="number" id="in-rank-tore" placeholder="–">
+      </div>
+      <div>
+        <label class="team-label tl-martin">Gruppetto le Martin</label>
+        <input type="number" id="in-rank-martin" placeholder="–">
+      </div>
+      <div>
+        <label class="team-label tl-anders">Bike Trailers</label>
+        <input type="number" id="in-rank-anders" placeholder="–">
+      </div>
+    </div>
+
+    <div class="input-section-label" style="margin-top:1rem">Bytter brukt denne etappen</div>
+    <div class="input-row">
+      <div style="visibility:hidden"><label>–</label><input type="text" disabled></div>
+      <div>
+        <label class="team-label tl-eivind">Eivinds Velocipedklub</label>
+        <input type="number" id="in-bytter-eivind" min="0" max="5" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-tore">Tores Tour</label>
+        <input type="number" id="in-bytter-tore" min="0" max="5" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-martin">Gruppetto le Martin</label>
+        <input type="number" id="in-bytter-martin" min="0" max="5" placeholder="0">
+      </div>
+      <div>
+        <label class="team-label tl-anders">Bike Trailers</label>
+        <input type="number" id="in-bytter-anders" min="0" max="5" placeholder="0">
+      </div>
+    </div>
+    <div class="input-section-label" style="margin-top:1.5rem">Byttedetaljer (valgfritt — fyll inn per bytte som ble gjort)</div>
+    <div class="info-box" style="margin-bottom:0.75rem">Legg til ett bytte om gangen. Poeng = hva rytteren scoret <em>denne etappen</em> på tourmanager.no.</div>
+    <div id="bytte-rader"></div>
+    <button class="btn btn-sm" style="background:var(--gris-mid);color:var(--blanc);border:1px solid var(--gris-light);margin-bottom:0.75rem" onclick="leggTilBytteRad()">+ Legg til bytte</button>
+
+    <button class="btn" onclick="saveEtappe()">💾 Lagre etappe</button>
+    <button class="btn btn-sm" style="background:var(--gris-mid);color:var(--blanc);border:1px solid var(--gris-light)" onclick="avbrytRedigering()">Avbryt redigering</button>
+    <button class="btn btn-danger btn-sm" onclick="clearAll()">Nullstill 2026</button>
+  </div>
+
+  <div class="subsection">Innlagte etapper</div>
+  <div id="input-tabell"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════
+const TEAMS = [
+  { id: 'eivind', name: 'Eivinds Velocipedklub', short: 'EV',  color: '#FFD700' },
+  { id: 'tore',   name: 'Tores Tour',            short: 'TT',  color: '#E8002D' },
+  { id: 'martin', name: 'Gruppetto le Martin',   short: 'GM',  color: '#00A651' },
+  { id: 'anders', name: 'Bike Trailers',         short: 'BT',  color: '#4A90D9' },
+];
+
+// Etapper fra Roadbook Tour de France 2026 (offisiell, 3321.2 km totalt)
+// Profiler fra tourmanager.no: Lagtempo, Kupert, Fjell, Flat, Tempo
+const ETAPPER_2026 = [
+  { nr:1,  dato:'04.07', dag:'Lør', profil:'Lagtempo', rute:'Barcelona → Barcelona',                       km:19.6  },
+  { nr:2,  dato:'05.07', dag:'Søn', profil:'Kupert',   rute:'Tarragona → Barcelona',                       km:166.6 },
+  { nr:3,  dato:'06.07', dag:'Man', profil:'Fjell',    rute:'Granollers → Les Angles',                     km:195.9 },
+  { nr:4,  dato:'07.07', dag:'Tir', profil:'Kupert',   rute:'Carcassonne → Foix',                          km:181.9 },
+  { nr:5,  dato:'08.07', dag:'Ons', profil:'Flat',     rute:'Lannemezan → Pau',                            km:158.3 },
+  { nr:6,  dato:'09.07', dag:'Tor', profil:'Fjell',    rute:'Pau → Gavarnie-Gèdre',                        km:186.2 },
+  { nr:7,  dato:'10.07', dag:'Fre', profil:'Flat',     rute:'Hagetmau → Bordeaux',                         km:174.7 },
+  { nr:8,  dato:'11.07', dag:'Lør', profil:'Flat',     rute:'Périgueux → Bergerac',                        km:179.1 },
+  { nr:9,  dato:'12.07', dag:'Søn', profil:'Kupert',   rute:'Malemort → Ussel',                            km:185.5 },
+  // Hviledag mandag 13. juli - Cantal
+  { nr:10, dato:'14.07', dag:'Tir', profil:'Fjell',    rute:'Aurillac → Le Lioran',                        km:168.5 },
+  { nr:11, dato:'15.07', dag:'Ons', profil:'Flat',     rute:'Vichy → Nevers',                              km:161.3 },
+  { nr:12, dato:'16.07', dag:'Tor', profil:'Flat',     rute:'Circuit Nevers Magny-Cours → Chalon-sur-Saône', km:180.4 },
+  { nr:13, dato:'17.07', dag:'Fre', profil:'Kupert',   rute:'Dole → Belfort',                              km:205.8 },
+  { nr:14, dato:'18.07', dag:'Lør', profil:'Fjell',    rute:'Mulhouse → Le Markstein Fellering',           km:155.3 },
+  { nr:15, dato:'19.07', dag:'Søn', profil:'Fjell',    rute:'Champagnole → Plateau de Solaison Brison',    km:183.9 },
+  // Hviledag mandag 20. juli - Haute-Savoie
+  { nr:16, dato:'21.07', dag:'Tir', profil:'Tempo',    rute:'Évian-les-Bains → Thonon-les-Bains',          km:26.1  },
+  { nr:17, dato:'22.07', dag:'Ons', profil:'Flat',     rute:'Chambéry → Voiron',                           km:175.1 },
+  { nr:18, dato:'23.07', dag:'Tor', profil:'Fjell',    rute:'Voiron → Orcières-Merlette',                  km:185.2 },
+  { nr:19, dato:'24.07', dag:'Fre', profil:'Fjell',    rute:"Gap → Alpe d'Huez",                           km:127.9 },
+  { nr:20, dato:'25.07', dag:'Lør', profil:'Fjell',    rute:"Le Bourg d'Oisans → Alpe d'Huez",             km:170.9 },
+  { nr:21, dato:'26.07', dag:'Søn', profil:'Flat',     rute:'Thoiry → Paris Champs-Élysées',               km:133.0 },
+];
+
+// Historical data from Numbers file
+// 2025 per-etappe data (fra Numbers-fil)
+const HIST_2025_PER_ETAPPE = {
+  'Eivinds Velocipedklub': [338,1073,340,1011,705,612,705,389,461,302,537,905,774,999,325,481,380,1361,1632,269,325],
+  'Tores Tour':            [439,1091,298,875,765,928,669,459,588,317,519,1056,750,1029,402,447,444,1425,1598,317,533],
+  'Gruppetto le Martin':   [648,969,76,1022,910,535,716,145,487,588,413,815,985,1432,105,376,129,1009,1402,753,319],
+  'Bike Trailers':         [288,1001,251,833,564,474,494,223,459,284,490,1144,765,1668,355,565,464,1273,1598,585,441],
+};
+
+const HIST = {
+  years: [2021, 2022, 2023, 2024, 2025],
+  poeng: {
+    'Eivinds Velocipedklub': [16843, 16670, 13421, 12173, 13924],
+    'Tores Tour':            [15776, 16235, 12629, 13274, 14949],
+    'Gruppetto le Martin':   [null,  null,  null,  null,  13834],
+    'Bike Trailers':         [13801, 14948, 12269, 11214, 14219],
+  },
+  dagerGult: {
+    'Eivinds Velocipedklub': [20, 17, 14, 1, 1],
+    'Tores Tour':            [1,  2,  6, 20, 17],
+    'Gruppetto le Martin':   [0,  0,  0, 0,  3],
+    'Bike Trailers':         [0,  2,  1, 0,  0],
+  },
+  ligaSeirer: {
+    2021: { 'Eivinds Velocipedklub': [9,7,5], 'Tores Tour': [9,6,6], 'Bike Trailers': [3,8,10] },
+    2022: { 'Eivinds Velocipedklub': [11,6,4],'Tores Tour': [5,10,6],'Bike Trailers': [5,5,11] },
+    2023: { 'Eivinds Velocipedklub': [10,7,4],'Tores Tour': [7,6,8], 'Bike Trailers': [4,9,8] },
+    2024: { 'Eivinds Velocipedklub': [6,10,5],'Tores Tour': [10,5,6],'Bike Trailers': [5,6,10] },
+    2025: { 'Eivinds Velocipedklub': [3,8,8,2],'Tores Tour':[7,8,5,1],'Gruppetto le Martin':[7,2,1,11],'Bike Trailers':[4,4,6,7] },
+  },
+  avstandTilVinner: {
+    'Eivinds Velocipedklub': [0,    0,    0,    -1101, -1025],
+    'Tores Tour':            [-1067,-435,-792,   0,    0],
+    'Gruppetto le Martin':   [null, null, null, null,  -1115],
+    'Bike Trailers':         [-3042,-1722,-1152,-2060,-730],
+  }
+};
+
+// ════════════════════════════════════════════════
+//  STORAGE (Firebase Realtime Database)
+// ════════════════════════════════════════════════
+function getPoeng2026() {
+  return window._fbData || {};
+}
+function savePoeng2026(data) {
+  window._fbData = data;
+  if (window._fbSet) {
+    window._fbSet(data).catch(err => {
+      console.error('Firebase feil:', err);
+      alert('Kunne ikke lagre til Firebase: ' + err.message);
+    });
+  }
+}
+
+// ════════════════════════════════════════════════
+//  COMPUTED
+// ════════════════════════════════════════════════
+function computeStats() {
+  const raw = getPoeng2026();
+  const etapper = Object.keys(raw).filter(k => /^\d+$/.test(k)).map(Number).sort((a,b)=>a-b);
+  const nEtapper = etapper.length;
+
+  // Per etappe arrays (aligned to etapper 1..nEtapper)
+  const perEtappe = TEAMS.map(t => etapper.map(e => raw[e]?.[t.id] ?? 0));
+  const akkumulert = perEtappe.map(arr => {
+    let sum = 0; return arr.map(v => { sum += v; return sum; });
+  });
+  const totals = akkumulert.map(a => a.length ? a[a.length-1] : 0);
+  const ranked = TEAMS.map((t,i) => ({ ...t, total: totals[i] }))
+    .sort((a,b) => b.total - a.total);
+
+  // Dager i "gult" (ledet i ligaen per etappe, 1-indexed)
+  const dagerGult = TEAMS.map(() => 0);
+  etapper.forEach((e, i) => {
+    const pts = TEAMS.map((_,ti) => akkumulert[ti][i]);
+    const maxPts = Math.max(...pts);
+    pts.forEach((p,ti) => { if (p === maxPts && maxPts > 0) dagerGult[ti]++; });
+  });
+
+  // Bytte-data: computed from separate input
+  // For 2026 we don't track switches in this form, skip
+
+  // Placement per etappe
+  const plassering = etapper.map((e, i) => {
+    const pts = TEAMS.map((_,ti) => perEtappe[ti][i]);
+    const sorted = [...pts].sort((a,b)=>b-a);
+    return pts.map(p => sorted.indexOf(p) + 1);
+  });
+
+  // Per type
+  const typeMap = { Flat:[], Kupert:[], Fjell:[], Tempo:[], Lagtempo:[] };
+  etapper.forEach((e, i) => {
+    const prof = ETAPPER_2026[e-1]?.profil ?? 'Flat';
+    if (!typeMap[prof]) typeMap[prof] = [];
+    typeMap[prof].push(i);
+  });
+  const typePoeng = {};
+  Object.entries(typeMap).forEach(([type, idxs]) => {
+    typePoeng[type] = TEAMS.map((_,ti) =>
+      idxs.reduce((s, i) => s + perEtappe[ti][i], 0)
+    );
+  });
+
+  // Gap to leader
+  const gap = etapper.map((e, i) => {
+    const pts = TEAMS.map((_,ti) => akkumulert[ti][i]);
+    const best = Math.max(...pts);
+    return pts.map(p => p - best);
+  });
+
+  // Etappe winners
+  const etappeVinnere = etapper.map((e, i) => {
+    const pts = TEAMS.map((_,ti) => perEtappe[ti][i]);
+    const best = Math.max(...pts);
+    return TEAMS.filter((_,ti) => pts[ti] === best).map(t=>t.name);
+  });
+  const etappeSeierCount = TEAMS.map((_,ti) =>
+    etapper.filter((e,i) => {
+      const pts = TEAMS.map((_,tii) => perEtappe[tii][i]);
+      return pts[ti] === Math.max(...pts) && pts[ti] > 0;
+    }).length
+  );
+
+  // Best single stage
+  let bestStage = { team: '', pts: 0, etappe: 0 };
+  etapper.forEach((e, i) => {
+    TEAMS.forEach((t, ti) => {
+      if (perEtappe[ti][i] > bestStage.pts) {
+        bestStage = { team: t.name, pts: perEtappe[ti][i], etappe: e };
+      }
+    });
+  });
+
+  // Worst single stage
+  let worstStage = { team: '', pts: Infinity, etappe: 0 };
+  etapper.forEach((e, i) => {
+    TEAMS.forEach((t, ti) => {
+      if (perEtappe[ti][i] < worstStage.pts) {
+        worstStage = { team: t.name, pts: perEtappe[ti][i], etappe: e };
+      }
+    });
+  });
+
+  // Biggest comeback: max single-etappe climb in ranking
+  let biggestComeback = { team: '', gain: 0, etappe: 0 };
+  if (plassering.length > 1) {
+    for (let i = 1; i < plassering.length; i++) {
+      TEAMS.forEach((t, ti) => {
+        const prev = plassering[i-1][ti];
+        const curr = plassering[i][ti];
+        const gain = prev - curr; // positive = moved up
+        if (gain > biggestComeback.gain) {
+          biggestComeback = { team: t.name, gain, etappe: etapper[i] };
+        }
+      });
+    }
+  }
+
+  // Most consistent: lowest std dev in per-etappe scores
+  const stdDev = TEAMS.map((_,ti) => {
+    const vals = etapper.map((_,i) => perEtappe[ti][i]).filter(v=>v>0);
+    if (vals.length < 2) return Infinity;
+    const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const variance = vals.reduce((a,v)=>a+(v-mean)**2,0)/vals.length;
+    return Math.sqrt(variance);
+  });
+  const mostConsistentIdx = stdDev.indexOf(Math.min(...stdDev.filter(s=>s<Infinity)));
+
+  // Average per etappe
+  const avgPerEtappe = TEAMS.map((_,ti) =>
+    nEtapper > 0 ? Math.round(totals[ti] / nEtapper) : 0
+  );
+
+  // Avg global rank estimate (based on relative performance)
+  // Tempo etapper
+  const tempoIdxs = etapper.map((e,i) => ETAPPER_2026[e-1]?.profil === 'Tempo' ? i : -1).filter(i=>i>=0);
+  const tempoPoeng = TEAMS.map((_,ti) =>
+    tempoIdxs.reduce((s,i) => s + perEtappe[ti][i], 0)
+  );
+  const bestTempoIdx = tempoPoeng.indexOf(Math.max(...tempoPoeng));
+
+  // Mountain
+  const fjellIdxs = etapper.map((e,i) => ETAPPER_2026[e-1]?.profil === 'Fjell' ? i : -1).filter(i=>i>=0);
+  const fjellPoeng = TEAMS.map((_,ti) =>
+    fjellIdxs.reduce((s,i) => s + perEtappe[ti][i], 0)
+  );
+  const bestFjellIdx = fjellPoeng.indexOf(Math.max(...fjellPoeng));
+
+  // Spurt
+  const spurtIdxs = etapper.map((e,i) => ['Flat','Kupert'].includes(ETAPPER_2026[e-1]?.profil) ? i : -1).filter(i=>i>=0);
+  const spurtPoeng = TEAMS.map((_,ti) =>
+    spurtIdxs.reduce((s,i) => s + perEtappe[ti][i], 0)
+  );
+  const bestSpurtIdx = spurtPoeng.indexOf(Math.max(...spurtPoeng));
+
+  // Global league rankings per etappe
+  const ligaRankings = TEAMS.map((_,ti) =>
+    etapper.map(e => raw['rank_'+e]?.[TEAMS[ti].id] ?? null)
+  );
+
+  // Bytter per etappe
+  const bytterPerEtappe = TEAMS.map((_,ti) =>
+    etapper.map(e => raw['bytter_'+e]?.[TEAMS[ti].id] ?? 0)
+  );
+  const totalBytter = TEAMS.map((_,ti) =>
+    bytterPerEtappe[ti].reduce((s,v) => s+v, 0)
+  );
+  const gjenvarendeBytter = TEAMS.map((_,ti) => 25 - totalBytter[ti]);
+
+  // Byttedetaljer og faktisk effekt
+  // For each team: sum of (innP - utP) across all bytter
+  const faktiskEffekt = TEAMS.map(t => {
+    let sum = 0; let count = 0;
+    etapper.forEach(e => {
+      const det = raw['detaljer_'+e] || [];
+      det.filter(d => d.lag === t.id).forEach(d => {
+        sum += d.effekt; count++;
+      });
+    });
+    return { sum, count, snitt: count > 0 ? Math.round(sum/count) : null };
+  });
+
+  // All bytte-detaljer flattened with etappe info
+  const alleBytter = [];
+  etapper.forEach(e => {
+    const det = raw['detaljer_'+e] || [];
+    det.forEach(d => alleBytter.push({ ...d, etappe: e }));
+  });
+
+  // Best and worst single bytte
+  let bestBytte = null, worstBytte = null;
+  alleBytter.forEach(b => {
+    if (!bestBytte || b.effekt > bestBytte.effekt) bestBytte = b;
+    if (!worstBytte || b.effekt < worstBytte.effekt) worstBytte = b;
+  });
+
+  return {
+    raw, etapper, nEtapper, perEtappe, akkumulert, totals,
+    ranked, dagerGult, plassering, typePoeng, gap, etappeVinnere,
+    etappeSeierCount, bestStage, worstStage, biggestComeback,
+    mostConsistentIdx, stdDev, avgPerEtappe,
+    tempoPoeng, bestTempoIdx,
+    fjellPoeng, bestFjellIdx,
+    spurtPoeng, bestSpurtIdx,
+    ligaRankings,
+    bytterPerEtappe, totalBytter, gjenvarendeBytter,
+    faktiskEffekt, alleBytter, bestBytte, worstBytte,
+  };
+}
+
+// ════════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  renderAll();
+}
+
+// ════════════════════════════════════════════════
+//  RENDER HELPERS
+// ════════════════════════════════════════════════
+let chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function fmtPts(n) { return n.toLocaleString('no-NO'); }
+function badgeClass(profil) {
+  return 'badge-' + (profil || 'Flat');
+}
+
+function rankClass(r) { return ['','rank1','rank2','rank3','rank4'][r] || ''; }
+
+// ════════════════════════════════════════════════
+//  LIVE PAGE
+// ════════════════════════════════════════════════
+function renderLive(s) {
+  // Ticker
+  const leder = s.ranked[0];
+  document.getElementById('ticker-etappe').textContent = s.nEtapper;
+  document.getElementById('ticker-leder').textContent = leder ? leder.short + ' ' + fmtPts(leder.total) + ' p' : '–';
+
+  // Etappe dots
+  const dots = document.getElementById('etappe-dots');
+  dots.innerHTML = '';
+  ETAPPER_2026.forEach(e => {
+    const d = document.createElement('div');
+    d.className = 'ep-dot' + (s.etapper.includes(e.nr) ? ' done' : '') +
+      (s.nEtapper === e.nr ? ' current' : '');
+    d.title = `E${e.nr} · ${e.dag} ${e.dato} · ${e.profil} · ${e.rute} (${e.km} km)`;
+    dots.appendChild(d);
+  });
+
+  // Podium
+  const pod = document.getElementById('podium-cards');
+  pod.innerHTML = '';
+  const winner = s.ranked[0];
+  s.ranked.forEach((t, ri) => {
+    const gap = t.total - (winner?.total ?? 0);
+    const wins = s.etappeSeierCount[TEAMS.findIndex(x=>x.id===t.id)];
+    pod.innerHTML += `
+      <div class="podium-card p${ri+1}">
+        <div class="podium-rank">${ri+1}</div>
+        <div class="podium-team"><span class="dot" style="background:${t.color}"></span>${t.short}</div>
+        <div style="font-size:0.72rem;color:#888;margin-bottom:0.3rem">${t.name}</div>
+        <div class="podium-pts">${fmtPts(t.total)}</div>
+        <div class="podium-diff">${gap === 0 ? '—' : gap.toLocaleString('no-NO') + ' p'}</div>
+        <div class="podium-wins">🏁 ${wins} seier${wins!==1?'er':''} · 🔄 ${s.totalBytter[TEAMS.findIndex(x=>x.id===t.id)]} bytter · ${s.gjenvarendeBytter[TEAMS.findIndex(x=>x.id===t.id)]} igjen</div>
+      </div>`;
+  });
+
+  // Gjenstående bytter
+  const bytterEl = document.getElementById('bytter-status');
+  if (bytterEl) {
+    const sortedByGjen = [...TEAMS].map((t,i) => ({...t, igjen: s.gjenvarendeBytter[i], brukt: s.totalBytter[i]}))
+      .sort((a,b) => b.igjen - a.igjen);
+    bytterEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.5rem">` +
+      sortedByGjen.map(t => {
+        const pct = (t.igjen / 25) * 100;
+        const barCol = pct > 50 ? t.color : pct > 25 ? '#E6B800' : '#E8002D';
+        return `<div style="background:var(--gris);border-radius:4px;padding:0.9rem;border-top:3px solid ${t.color}">
+          <div style="font-size:0.7rem;font-family:'Space Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:0.4rem">${t.short}</div>
+          <div style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:${barCol};line-height:1">${t.igjen}</div>
+          <div style="font-size:0.7rem;color:#666;font-family:'Space Mono',monospace">igjen av 25</div>
+          <div style="background:var(--gris-mid);border-radius:2px;height:4px;margin-top:0.5rem">
+            <div style="background:${barCol};width:${pct}%;height:4px;border-radius:2px;transition:width 0.4s"></div>
+          </div>
+          <div style="font-size:0.68rem;color:#555;font-family:'Space Mono',monospace;margin-top:0.3rem">${t.brukt} brukt</div>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+
+  // Akkumulert chart
+  destroyChart('akk');
+  const akkCtx = document.getElementById('chart-akk').getContext('2d');
+  chartInstances['akk'] = new Chart(akkCtx, {
+    type: 'line',
+    data: {
+      labels: s.etapper.map(e=>'E'+e),
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: s.akkumulert[i],
+        borderColor: t.color,
+        backgroundColor: t.color+'22',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        tension: 0.3,
+        fill: false,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#F5F3EE', font: { family: 'Space Mono', size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#888', font:{family:'Space Mono',size:10} }, grid:{color:'#1A1A1A'} },
+        y: { ticks: { color: '#888', font:{family:'Space Mono',size:10} }, grid:{color:'#2A2A2A'} }
+      }
+    }
+  });
+
+  // Per etappe bar chart
+  destroyChart('per-etappe');
+  const peCtx = document.getElementById('chart-per-etappe').getContext('2d');
+  chartInstances['per-etappe'] = new Chart(peCtx, {
+    type: 'bar',
+    data: {
+      labels: s.etapper.map(e=>'E'+e),
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: s.perEtappe[i],
+        backgroundColor: t.color+'CC',
+        borderColor: t.color,
+        borderWidth: 1,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#F5F3EE', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        x: { ticks: { color: '#888', font:{family:'Space Mono',size:10} }, grid:{color:'#1A1A1A'}, stacked: false },
+        y: { ticks: { color: '#888', font:{family:'Space Mono',size:10} }, grid:{color:'#2A2A2A'} }
+      }
+    }
+  });
+
+  // Prognose
+  renderPrognose(s);
+
+  // Table per etappe
+  const tbl = document.getElementById('table-per-etappe');
+  if (s.etapper.length === 0) { tbl.innerHTML = '<div class="info-box">Ingen data ennå — legg inn etappepoeng under ✏️ Legg inn.</div>'; return; }
+  let html = `<table class="data-table"><thead><tr><th>Etappe</th>`;
+  TEAMS.forEach(t => html += `<th style="color:${t.color}">${t.short}</th>`);
+  html += `</tr></thead><tbody>`;
+  s.etapper.forEach((e, i) => {
+    const pts = TEAMS.map((_,ti) => s.perEtappe[ti][i]);
+    const best = Math.max(...pts);
+    html += `<tr><td>E${e} <span class="tag">${ETAPPER_2026[e-1]?.dato}</span><span class="etappe-type-badge ${badgeClass(ETAPPER_2026[e-1]?.profil)}">${ETAPPER_2026[e-1]?.profil}</span></td>`;
+    pts.forEach(p => html += `<td class="${p===best?'winner':''}">${fmtPts(p)}</td>`);
+    html += `</tr>`;
+  });
+  html += `<tr style="border-top:2px solid #FFD700;font-weight:700"><td>Total</td>`;
+  TEAMS.forEach((_,ti) => {
+    const tot = s.totals[ti];
+    const best = Math.max(...s.totals);
+    html += `<td class="${tot===best?'winner':''}">${fmtPts(tot)}</td>`;
+  });
+  html += `</tr></tbody></table>`;
+  tbl.innerHTML = '<div class="table-scroll">' + html + '</div>';
+}
+
+// ════════════════════════════════════════════════
+//  PROGNOSE
+// ════════════════════════════════════════════════
+function renderPrognose(s) {
+  const cardsEl = document.getElementById('prognose-cards');
+  if (!cardsEl) return;
+
+  const nDone = s.nEtapper;
+  const nLeft = 21 - nDone;
+
+  if (nDone === 0) {
+    cardsEl.innerHTML = '<div class="info-box">Ingen data ennå — prognose vises når etappepoeng er lagt inn.</div>';
+    destroyChart('chart-prognose');
+    return;
+  }
+
+  // Snitt per etappe hittil (2026)
+  const snitt = TEAMS.map((_,ti) => s.totals[ti] / nDone);
+
+  // Forventet sluttpoeng
+  const projected = TEAMS.map((_,ti) => Math.round(s.totals[ti] + snitt[ti] * nLeft));
+  const projMax = Math.max(...projected);
+
+  // Summary cards
+  const byProj = TEAMS.map((t,i) => ({...t, tot: s.totals[i], proj: projected[i], snitt: Math.round(snitt[i])}))
+    .sort((a,b) => b.proj - a.proj);
+
+  cardsEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem">` +
+    byProj.map((t,ri) => {
+      const gap = t.proj - projMax;
+      const ref2025 = HIST.poeng[t.name]?.[4]; // 2025 sluttpoeng
+      const vs = ref2025 ? t.proj - ref2025 : null;
+      const vsStr = vs === null ? '' : (vs >= 0 ? `▲ +${vs.toLocaleString('no-NO')}` : `▼ ${vs.toLocaleString('no-NO')}`);
+      const vsCl = vs === null ? '' : vs >= 0 ? 'color:#00cc66' : 'color:#ff4444';
+      return `<div style="background:var(--gris);border-radius:4px;padding:0.9rem;border-top:3px solid ${t.color}">
+        <div style="font-size:0.65rem;font-family:'Space Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:0.3rem">${t.short}</div>
+        <div style="font-size:1.5rem;font-family:'Bebas Neue',sans-serif;color:${t.color};line-height:1.1">${t.proj.toLocaleString('no-NO')}</div>
+        <div style="font-size:0.68rem;font-family:'Space Mono',monospace;color:#555;margin-top:0.2rem">${gap === 0 ? 'LEDER' : gap.toLocaleString('no-NO') + ' fra leder'}</div>
+        <div style="font-size:0.68rem;font-family:'Space Mono',monospace;margin-top:0.25rem;${vsCl}">${vsStr} vs 2025</div>
+        <div style="font-size:0.65rem;color:#444;font-family:'Space Mono',monospace;margin-top:0.2rem">~${t.snitt.toLocaleString('no-NO')} p/etappe</div>
+      </div>`;
+    }).join('') + `</div>`;
+
+  // Chart: accumulated actual + projected extension + faint 2025 reference
+  const labels = Array.from({length:21}, (_,i) => 'E'+(i+1));
+
+  // Actual data: values for completed stages, null for future
+  const actualData = TEAMS.map((_,ti) =>
+    labels.map((_,i) => i < nDone ? (s.akkumulert[ti][i] ?? null) : null)
+  );
+
+  // Projected: starts at last actual point, linearly extends to projected total
+  const projData = TEAMS.map((_,ti) =>
+    labels.map((_,i) => {
+      if (i < nDone - 1) return null; // don't draw before current
+      const stepsAhead = i - (nDone - 1);
+      return Math.round(s.totals[ti] + snitt[ti] * stepsAhead);
+    })
+  );
+
+  // 2025 reference accumulated
+  const ref2025 = TEAMS.map(t => {
+    const vals = HIST_2025_PER_ETAPPE[t.name] || [];
+    let sum = 0;
+    return vals.map(v => { sum += v; return sum; });
+  });
+
+  destroyChart('chart-prognose');
+  const ctx = document.getElementById('chart-prognose');
+  if (!ctx) return;
+
+  chartInstances['chart-prognose'] = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        // Solid actual lines
+        ...TEAMS.map((t,i) => ({
+          label: t.short,
+          data: actualData[i],
+          borderColor: t.color,
+          backgroundColor: t.color + '15',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          tension: 0.3,
+          fill: false,
+          spanGaps: false,
+          order: 1,
+        })),
+        // Dashed projected lines
+        ...TEAMS.map((t,i) => ({
+          label: null,
+          data: projData[i],
+          borderColor: t.color,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [6,4],
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+          spanGaps: false,
+          order: 2,
+        })),
+        // Very faint 2025 reference
+        ...TEAMS.map((t,i) => ({
+          label: null,
+          data: ref2025[i],
+          borderColor: t.color + '35',
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderDash: [2,6],
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 3,
+        })),
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#F5F3EE',
+            font: { family: 'Space Mono', size: 11 },
+            filter: item => item.text !== null && item.text !== 'null',
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            title: ctx => {
+              const e = parseInt(ctx[0].label.replace('E',''));
+              const et = ETAPPER_2026[e-1];
+              return `E${e} · ${et?.dato} · ${et?.profil}`;
+            },
+            label: ctx => {
+              if (ctx.parsed.y === null || ctx.dataset.label === null) return null;
+              const i = ctx.dataIndex;
+              const suffix = i >= nDone ? ' (prognose)' : '';
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('no-NO')}${suffix}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color:'#888', font:{family:'Space Mono',size:9} }, grid:{color:'#1A1A1A'} },
+        y: { ticks: { color:'#888', font:{family:'Space Mono',size:9} }, grid:{color:'#2A2A2A'} }
+      }
+    }
+  });
+}
+
+
+// ════════════════════════════════════════════════
+//  STATISTIKK PAGE
+// ════════════════════════════════════════════════
+function renderStatistikk(s) {
+  // Plassering tabell
+  const tblPl = document.getElementById('table-plassering');
+  if (s.etapper.length === 0) { tblPl.innerHTML = '<div class="info-box">Ingen data ennå.</div>'; }
+  else {
+    let html = `<table class="data-table"><thead><tr><th>Etappe</th>`;
+    TEAMS.forEach(t => html += `<th style="color:${t.color}">${t.short}</th>`);
+    html += `</tr></thead><tbody>`;
+    s.etapper.forEach((e, i) => {
+      html += `<tr><td>E${e}</td>`;
+      s.plassering[i].forEach(r => html += `<td class="${rankClass(r)}">${r}.</td>`);
+      html += `</tr>`;
+    });
+    // Count row
+    const counts = [1,2,3,4].map(rank =>
+      TEAMS.map((_,ti) => s.plassering.filter(p => p[ti]===rank).length)
+    );
+    ['🥇','🥈','🥉','4.'].forEach((lbl,ri) => {
+      html += `<tr><td>${lbl} plasser</td>`;
+      counts[ri].forEach(c => html += `<td>${c}</td>`);
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    tblPl.innerHTML = '<div class="table-scroll">' + html + '</div>';
+  }
+
+  // Type chart
+  destroyChart('type');
+  const types = Object.keys(s.typePoeng);
+  const typeCtx = document.getElementById('chart-type').getContext('2d');
+  chartInstances['type'] = new Chart(typeCtx, {
+    type: 'radar',
+    data: {
+      labels: types,
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: types.map(tp => s.typePoeng[tp]?.[i] ?? 0),
+        borderColor: t.color,
+        backgroundColor: t.color+'33',
+        pointBackgroundColor: t.color,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#F5F3EE', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        r: {
+          ticks: { color:'#888', backdropColor:'transparent', font:{size:9} },
+          grid: { color:'#2A2A2A' },
+          pointLabels: { color:'#aaa', font:{family:'Space Mono',size:10} }
+        }
+      }
+    }
+  });
+
+  // Type tabell
+  const tblType = document.getElementById('table-type');
+  let html2 = `<table class="data-table"><thead><tr><th>Type</th>`;
+  TEAMS.forEach(t => html2 += `<th style="color:${t.color}">${t.short}</th>`);
+  html2 += `</tr></thead><tbody>`;
+  Object.entries(s.typePoeng).forEach(([type, pts]) => {
+    const best = Math.max(...pts);
+    html2 += `<tr><td><span class="etappe-type-badge ${badgeClass(type)}">${type}</span></td>`;
+    pts.forEach(p => html2 += `<td class="${p===best?'winner':''}">${fmtPts(p)}</td>`);
+    html2 += `</tr>`;
+  });
+  html2 += `</tbody></table>`;
+  tblType.innerHTML = '<div class="table-scroll">' + html2 + '</div>';
+
+  // Bytter chart
+  destroyChart('bytter');
+  const bytterCtx = document.getElementById('chart-bytter').getContext('2d');
+  chartInstances['bytter'] = new Chart(bytterCtx, {
+    type: 'bar',
+    data: {
+      labels: s.etapper.map(e=>'E'+e),
+      datasets: TEAMS.map((t,i) => ({
+        label: `${t.short} (tot: ${s.totalBytter[i]})`,
+        data: s.bytterPerEtappe[i],
+        backgroundColor: t.color+'CC',
+        borderColor: t.color,
+        borderWidth: 1,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color:'#F5F3EE', font:{family:'Space Mono',size:11} } },
+      },
+      scales: {
+        x: { ticks:{color:'#888',font:{family:'Space Mono',size:10}}, grid:{color:'#1A1A1A'} },
+        y: { ticks:{color:'#888',font:{family:'Space Mono',size:10},stepSize:1}, grid:{color:'#2A2A2A'}, min:0 }
+      }
+    }
+  });
+
+  // Faktisk bytteeffekt tabell
+  const effEl = document.getElementById('tabell-bytteeffekt');
+  if (effEl) {
+    const harData = s.faktiskEffekt.some(e => e.count > 0);
+    if (!harData) {
+      effEl.innerHTML = '<div class="info-box">Ingen byttedetaljer lagt inn ennå. Fyll inn rytter inn/ut under ✏️ Legg inn.</div>';
+    } else {
+      let h = `<div class="table-scroll"><table class="data-table"><thead><tr>
+        <th>Lag</th><th>Ant. bytter</th><th>Total effekt</th><th>Snitt per bytte</th><th>Beste bytte</th><th>Dårligste bytte</th>
+      </tr></thead><tbody>`;
+      const sorted = TEAMS.map((t,i) => ({...t, ...s.faktiskEffekt[i]})).sort((a,b) => b.sum - a.sum);
+      sorted.forEach(t => {
+        // find best/worst for this team
+        const teamBytter = s.alleBytter.filter(b => b.lag === t.id);
+        const best  = teamBytter.reduce((m,b) => b.effekt > (m?.effekt ?? -Infinity) ? b : m, null);
+        const worst = teamBytter.reduce((m,b) => b.effekt < (m?.effekt ?? Infinity)  ? b : m, null);
+        const effKl = t.sum > 0 ? 'effekt-positiv' : t.sum < 0 ? 'effekt-negativ' : 'effekt-nul';
+        const snittKl = t.snitt > 0 ? 'effekt-positiv' : t.snitt < 0 ? 'effekt-negativ' : 'effekt-nul';
+        h += `<tr>
+          <td><span class="dot" style="background:${t.color}"></span>${t.name}</td>
+          <td>${t.count}</td>
+          <td class="${effKl}">${t.sum > 0 ? '+' : ''}${t.sum}</td>
+          <td class="${snittKl}">${t.snitt !== null ? (t.snitt > 0 ? '+' : '') + t.snitt : '–'}</td>
+          <td style="font-size:0.75rem">${best ? `${best.innN} (E${best.etappe}: +${best.effekt})` : '–'}</td>
+          <td style="font-size:0.75rem">${worst ? `${worst.innN} (E${worst.etappe}: ${worst.effekt})` : '–'}</td>
+        </tr>`;
+      });
+      h += `</tbody></table></div>`;
+      effEl.innerHTML = h;
+    }
+  }
+
+  // Alle bytter logg
+  const alleEl = document.getElementById('tabell-alle-bytter');
+  if (alleEl) {
+    if (s.alleBytter.length === 0) {
+      alleEl.innerHTML = '<div class="info-box">Ingen byttedetaljer lagt inn ennå.</div>';
+    } else {
+      let h = `<div class="table-scroll"><table class="data-table"><thead><tr>
+        <th>Etappe</th><th>Lag</th><th>Rytter ut</th><th>Poeng ut</th><th>Rytter inn</th><th>Poeng inn</th><th>Effekt</th>
+      </tr></thead><tbody>`;
+      // Sort by etappe
+      const sorted = [...s.alleBytter].sort((a,b) => a.etappe - b.etappe);
+      sorted.forEach(b => {
+        const t = TEAMS.find(t => t.id === b.lag);
+        const effKl = b.effekt > 0 ? 'effekt-positiv' : b.effekt < 0 ? 'effekt-negativ' : 'effekt-nul';
+        h += `<tr>
+          <td>E${b.etappe}</td>
+          <td><span class="dot" style="background:${t?.color}"></span>${t?.short}</td>
+          <td style="color:#aaa">${b.utN}</td>
+          <td>${b.utP}</td>
+          <td style="color:#aaa">${b.innN}</td>
+          <td>${b.innP}</td>
+          <td class="${effKl}">${b.effekt > 0 ? '+' : ''}${b.effekt}</td>
+        </tr>`;
+      });
+      h += `</tbody></table></div>`;
+      alleEl.innerHTML = h;
+    }
+  }
+
+  // Liga ranking chart
+  destroyChart('liga-rank');
+  const rankCtx = document.getElementById('chart-liga-rank').getContext('2d');
+  const hasRankData = s.ligaRankings.some(arr => arr.some(v => v !== null));
+  if (!hasRankData) {
+    document.getElementById('chart-liga-rank').parentElement.innerHTML +=
+      '<div class="info-box" style="margin-top:-1rem">Ingen ligaplasseringer lagt inn ennå.</div>';
+  } else {
+    chartInstances['liga-rank'] = new Chart(rankCtx, {
+      type: 'line',
+      data: {
+        labels: s.etapper.map(e=>'E'+e),
+        datasets: TEAMS.map((t,i) => ({
+          label: t.short,
+          data: s.ligaRankings[i],
+          borderColor: t.color,
+          backgroundColor: t.color+'22',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          tension: 0.3,
+          fill: false,
+          spanGaps: true,
+        }))
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color:'#F5F3EE', font:{family:'Space Mono',size:11} } } },
+        scales: {
+          x: { ticks:{color:'#888',font:{family:'Space Mono',size:10}}, grid:{color:'#1A1A1A'} },
+          y: {
+            reverse: true,
+            ticks: { color:'#888', font:{family:'Space Mono',size:10} },
+            grid: { color:'#2A2A2A' },
+            title: { display:true, text:'Lavere = bedre', color:'#666', font:{size:10} }
+          }
+        }
+      }
+    });
+  }
+
+  // Gap chart
+  destroyChart('gap');
+  const gapCtx = document.getElementById('chart-gap').getContext('2d');
+  chartInstances['gap'] = new Chart(gapCtx, {
+    type: 'line',
+    data: {
+      labels: s.etapper.map(e=>'E'+e),
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: s.gap.map(g => g[i]),
+        borderColor: t.color,
+        backgroundColor: t.color+'22',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+        pointRadius: 3,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#F5F3EE', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        x: { ticks:{color:'#888', font:{family:'Space Mono',size:10}}, grid:{color:'#1A1A1A'} },
+        y: { ticks:{color:'#888', font:{family:'Space Mono',size:10}}, grid:{color:'#2A2A2A'} }
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════
+//  HISTORIKK PAGE
+// ════════════════════════════════════════════════
+function renderHistorikk(s) {
+  // Totale poeng historisk — with 2026
+  destroyChart('hist-poeng');
+  const allYears = [...HIST.years, 2026];
+  const histCtx = document.getElementById('chart-hist-poeng').getContext('2d');
+  const totals2026 = TEAMS.map((_,i) => s.totals[i] || null);
+  chartInstances['hist-poeng'] = new Chart(histCtx, {
+    type: 'bar',
+    data: {
+      labels: allYears,
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: [...(HIST.poeng[t.name] || [null,null,null,null,null]), totals2026[i]],
+        backgroundColor: t.color+'BB',
+        borderColor: t.color,
+        borderWidth: 1,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#F5F3EE', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        x: { ticks:{color:'#888'}, grid:{color:'#1A1A1A'} },
+        y: { ticks:{color:'#888'}, grid:{color:'#2A2A2A'} }
+      }
+    }
+  });
+
+  // Ligaplasseringer tabell (1.-4. plass per sesong)
+  const tblS = document.getElementById('table-seirer');
+  let html = `<table class="data-table"><thead><tr><th>Lag</th>`;
+  [2021,2022,2023,2024,2025].forEach(y => html += `<th>${y}</th>`);
+  html += `<th>2026*</th></tr></thead><tbody>`;
+  TEAMS.forEach((t,ti) => {
+    html += `<tr><td><span class="dot" style="background:${t.color}"></span>${t.name}</td>`;
+    [2021,2022,2023,2024,2025].forEach(y => {
+      const d = HIST.ligaSeirer[y]?.[t.name];
+      if (!d) { html += `<td>–</td>`; return; }
+      const medaljer = ['🥇','🥈','🥉','4.'];
+      const txt = d.map((v,i) => v > 0 ? `${v}${medaljer[i]}` : null).filter(Boolean).join(' ');
+      html += `<td style="font-size:0.78rem">${txt || '–'}</td>`;
+    });
+    html += `<td class="winner">${s.etappeSeierCount[ti]}🏁 etappeseiere</td>`;
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  tblS.innerHTML = '<div class="table-scroll">' + html + '</div>';
+
+  // Dager i gult chart
+  destroyChart('gult');
+  const gultCtx = document.getElementById('chart-gult').getContext('2d');
+  const dagerGult2026 = TEAMS.map((_,i) => s.dagerGult[i]);
+  chartInstances['gult'] = new Chart(gultCtx, {
+    type: 'bar',
+    data: {
+      labels: [...HIST.years, 2026],
+      datasets: TEAMS.map((t,i) => ({
+        label: t.short,
+        data: [...(HIST.dagerGult[t.name]||[0,0,0,0,0]), dagerGult2026[i]],
+        backgroundColor: t.color+'BB',
+        borderColor: t.color,
+        borderWidth: 1,
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color:'#F5F3EE', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        x: { stacked:true, ticks:{color:'#888'}, grid:{color:'#1A1A1A'} },
+        y: { stacked:true, ticks:{color:'#888'}, grid:{color:'#2A2A2A'}, max:21 }
+      }
+    }
+  });
+
+  // Avstand til vinner
+  const tblA = document.getElementById('table-avstand');
+  let htmlA = `<table class="data-table"><thead><tr><th>Lag</th>`;
+  HIST.years.forEach(y => htmlA += `<th>${y}</th>`);
+  htmlA += `<th>2026*</th></tr></thead><tbody>`;
+  TEAMS.forEach((t,ti) => {
+    const hist = HIST.avstandTilVinner[t.name] || [];
+    const v2026 = s.nEtapper > 0 ? s.totals[ti] - Math.max(...s.totals) : null;
+    htmlA += `<tr><td><span class="dot" style="background:${t.color}"></span>${t.name}</td>`;
+    hist.forEach(v => htmlA += `<td class="${v===0?'winner':''}">${v===0?'VINNER':v!==null?v.toLocaleString('no-NO'):'–'}</td>`);
+    htmlA += `<td class="${v2026===0?'winner':''}">${v2026===0?'LEDER':v2026!==null?v2026.toLocaleString('no-NO'):'–'}</td>`;
+    htmlA += `</tr>`;
+  });
+  htmlA += `</tbody></table>`;
+  tblA.innerHTML = '<div class="table-scroll">' + htmlA + '</div>';
+}
+
+
+// ════════════════════════════════════════════════
+//  INPUT PAGE
+// ════════════════════════════════════════════════
+function renderInput() {
+  const data = getPoeng2026();
+  const etapper = Object.keys(data).filter(k => /^\d+$/.test(k)).map(Number).sort((a,b)=>a-b);
+  const tbl = document.getElementById('input-tabell');
+  if (etapper.length === 0) {
+    tbl.innerHTML = '<div class="info-box">Ingen etapper lagt inn ennå.</div>';
+    return;
+  }
+  let html = `<table class="data-table"><thead><tr><th>Etappe</th>`;
+  TEAMS.forEach(t => html += `<th style="color:${t.color}">${t.short}</th>`);
+  html += `<th></th></tr></thead><tbody>`;
+  etapper.forEach(e => {
+    const row = data[e] || {};
+    const pts = TEAMS.map(t => row[t.id] ?? 0);
+    const rankRow = data['rank_'+e] || {};
+    const bytterRow = data['bytter_'+e] || {};
+    const best = Math.max(...pts);
+    const bestRank = Math.min(...TEAMS.map(t => rankRow[t.id] ?? Infinity));
+    const mostBytter = Math.max(...TEAMS.map(t => bytterRow[t.id] ?? 0));
+    html += `<tr><td>E${e} <span class="tag">${ETAPPER_2026[e-1]?.dag} ${ETAPPER_2026[e-1]?.dato}</span><br><span class="etappe-type-badge badge-${ETAPPER_2026[e-1]?.profil}">${ETAPPER_2026[e-1]?.profil}</span></td>`;
+    TEAMS.forEach(t => {
+      const p = row[t.id] ?? 0;
+      const r = rankRow[t.id];
+      const b = bytterRow[t.id];
+      html += `<td class="${p===best?'winner':''}">`;
+      html += fmtPts(p);
+      if (r) html += `<br><span style="font-size:0.7rem;color:${r===bestRank?'#FFD700':'#888'}">#${r.toLocaleString('no-NO')}</span>`;
+      if (b !== undefined) html += `<br><span style="font-size:0.7rem;color:${b===mostBytter&&b>0?'#E8002D':'#666'}">🔄 ${b}</span>`;
+      html += `</td>`;
+    });
+    html += `<td style="white-space:nowrap"><button class="btn btn-sm" style="background:var(--gris-mid);color:var(--blanc);border:1px solid var(--gris-light)" onclick="redigerEtappe(${e})">✎</button> <button class="btn btn-danger btn-sm" onclick="deleteEtappe(${e})">✕</button></td></tr>`;
+  });
+  html += `</tbody></table>`;
+  tbl.innerHTML = '<div class="table-scroll">' + html + '</div>';
+
+  // Pre-fill next etappe (men ikke hvis vi er midt i en redigering)
+  if (!window._redigererEtappe) {
+    const next = etapper.length < 21 ? (etapper[etapper.length-1]||0)+1 : '';
+    document.getElementById('in-etappe').value = next;
+  }
+}
+
+let bytteRadCounter = 0;
+
+function leggTilBytteRad() {
+  const id = bytteRadCounter++;
+  const lagOptions = TEAMS.map(t =>
+    `<option value="${t.id}">${t.short} – ${t.name}</option>`
+  ).join('');
+  const rad = document.createElement('div');
+  rad.className = 'bytte-rad';
+  rad.id = 'bytte-rad-' + id;
+  rad.innerHTML = `
+    <div>
+      <label>Lag</label>
+      <select class="bytte-lag" onchange="oppdaterBytteFarge(${id})">
+        ${lagOptions}
+      </select>
+    </div>
+    <div>
+      <label>Rytter ut</label>
+      <input type="text" class="bytte-ut-navn" placeholder="Etternavn">
+    </div>
+    <div>
+      <label>Poeng ut</label>
+      <input type="number" class="bytte-ut-poeng" placeholder="0" min="0">
+    </div>
+    <div>
+      <label>Rytter inn</label>
+      <input type="text" class="bytte-inn-navn" placeholder="Etternavn">
+    </div>
+    <div>
+      <label>Poeng inn</label>
+      <input type="number" class="bytte-inn-poeng" placeholder="0" min="0">
+    </div>
+    <button class="del-btn" onclick="slettBytteRad(${id})" title="Slett">✕</button>
+  `;
+  document.getElementById('bytte-rader').appendChild(rad);
+  oppdaterBytteFarge(id);
+}
+
+function oppdaterBytteFarge(id) {
+  const rad = document.getElementById('bytte-rad-' + id);
+  if (!rad) return;
+  const lag = rad.querySelector('.bytte-lag').value;
+  rad.className = 'bytte-rad tl-' + lag;
+}
+
+function slettBytteRad(id) {
+  const rad = document.getElementById('bytte-rad-' + id);
+  if (rad) rad.remove();
+}
+
+function clearBytteRader() {
+  document.getElementById('bytte-rader').innerHTML = '';
+}
+
+function getBytteDetaljer() {
+  const rader = document.querySelectorAll('#bytte-rader .bytte-rad');
+  const detaljer = [];
+  rader.forEach(rad => {
+    const lag  = rad.querySelector('.bytte-lag').value;
+    const utN  = rad.querySelector('.bytte-ut-navn').value.trim();
+    const utP  = parseInt(rad.querySelector('.bytte-ut-poeng').value) || 0;
+    const innN = rad.querySelector('.bytte-inn-navn').value.trim();
+    const innP = parseInt(rad.querySelector('.bytte-inn-poeng').value) || 0;
+    if (utN || innN) {
+      detaljer.push({ lag, utN, utP, innN, innP, effekt: innP - utP });
+    }
+  });
+  return detaljer;
+}
+
+function redigerEtappe(e) {
+  window._redigererEtappe = true;
+  const data = getPoeng2026();
+  const row = data[e] || {};
+  const rankRow = data['rank_'+e] || {};
+  const bytterRow = data['bytter_'+e] || {};
+  const detaljer = data['detaljer_'+e] || [];
+
+  // Fill points
+  document.getElementById('in-etappe').value = e;
+  TEAMS.forEach(t => {
+    document.getElementById('in-'+t.id).value = row[t.id] ?? '';
+    document.getElementById('in-rank-'+t.id).value = rankRow[t.id] ?? '';
+    document.getElementById('in-bytter-'+t.id).value = bytterRow[t.id] ?? '';
+  });
+
+  // Fill bytte-detaljer rows
+  clearBytteRader();
+  detaljer.forEach(d => {
+    leggTilBytteRad();
+    const lastRad = document.getElementById('bytte-rader').lastElementChild;
+    lastRad.querySelector('.bytte-lag').value = d.lag;
+    lastRad.querySelector('.bytte-ut-navn').value = d.utN ?? '';
+    lastRad.querySelector('.bytte-ut-poeng').value = d.utP ?? '';
+    lastRad.querySelector('.bytte-inn-navn').value = d.innN ?? '';
+    lastRad.querySelector('.bytte-inn-poeng').value = d.innP ?? '';
+    oppdaterBytteFarge(parseInt(lastRad.id.replace('bytte-rad-','')));
+  });
+
+  // Scroll to the form so it's obvious editing started
+  document.querySelector('.input-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Visual cue
+  const statusEl = document.getElementById('import-status');
+  if (statusEl) {
+    statusEl.style.color = '#FFD700';
+    statusEl.textContent = `✎ Redigerer etappe ${e} — trykk Lagre etappe for å oppdatere`;
+  }
+}
+
+function avbrytRedigering() {
+  window._redigererEtappe = false;
+  TEAMS.forEach(t => {
+    document.getElementById('in-'+t.id).value = '';
+    document.getElementById('in-rank-'+t.id).value = '';
+    document.getElementById('in-bytter-'+t.id).value = '';
+  });
+  clearBytteRader();
+  const statusEl = document.getElementById('import-status');
+  if (statusEl) statusEl.textContent = '';
+  renderAll();
+}
+
+function saveEtappe() {
+  const e = parseInt(document.getElementById('in-etappe').value);
+  if (!e || e < 1 || e > 21) { alert('Ugyldig etappenummer (1-21)'); return; }
+  const vals = {};
+  TEAMS.forEach(t => {
+    const v = parseInt(document.getElementById('in-'+t.id).value) || 0;
+    vals[t.id] = v;
+  });
+  // Rankings (optional)
+  const ranks = {};
+  TEAMS.forEach(t => {
+    const v = document.getElementById('in-rank-'+t.id).value;
+    if (v !== '') ranks[t.id] = parseInt(v);
+  });
+  // Bytter antall (optional)
+  const bytter = {};
+  TEAMS.forEach(t => {
+    const v = document.getElementById('in-bytter-'+t.id).value;
+    if (v !== '') bytter[t.id] = parseInt(v);
+  });
+  // Byttedetaljer (optional)
+  const detaljer = getBytteDetaljer();
+
+  const data = getPoeng2026();
+  data[e] = vals;
+  if (Object.keys(ranks).length > 0) data['rank_'+e] = ranks; else delete data['rank_'+e];
+  if (Object.keys(bytter).length > 0) data['bytter_'+e] = bytter; else delete data['bytter_'+e];
+  if (detaljer.length > 0) data['detaljer_'+e] = detaljer; else delete data['detaljer_'+e];
+  savePoeng2026(data);
+
+  TEAMS.forEach(t => {
+    document.getElementById('in-'+t.id).value = '';
+    document.getElementById('in-rank-'+t.id).value = '';
+    document.getElementById('in-bytter-'+t.id).value = '';
+  });
+  clearBytteRader();
+  window._redigererEtappe = false;
+  const next = e < 21 ? e+1 : '';
+  document.getElementById('in-etappe').value = next;
+  renderAll();
+}
+
+function deleteEtappe(e) {
+  if (!confirm(`Slett etappe ${e}?`)) return;
+  const data = getPoeng2026();
+  delete data[e];
+  savePoeng2026(data);
+  renderAll();
+}
+
+function clearAll() {
+  if (!confirm('Nullstill alle 2026-data? Dette kan ikke angres.')) return;
+  window._fbData = {};
+  if (window._fbSet) window._fbSet({});
+  renderAll();
+}
+
+// ════════════════════════════════════════════════
+//  MAIN RENDER
+// ════════════════════════════════════════════════
+function renderAll() {
+  const s = computeStats();
+  const active = document.querySelector('.page.active')?.id;
+  if (active === 'page-live')       renderLive(s);
+  if (active === 'page-statistikk') renderStatistikk(s);
+  if (active === 'page-historikk')  renderHistorikk(s);
+  if (active === 'page-input')      renderInput();
+}
+
+// Enter key in input
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('page-input').classList.contains('active')) {
+    saveEtappe();
+  }
+});
+
+// ════════════════════════════════════════════════
+//  HURTIGIMPORT
+// ════════════════════════════════════════════════
+function importerJSON() {
+  const raw = document.getElementById('import-json').value.trim();
+  const statusEl = document.getElementById('import-status');
+  if (!raw) { statusEl.textContent = '⚠️ Tom tekstboks'; return; }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch(err) {
+    statusEl.style.color = '#ff4444';
+    statusEl.textContent = '❌ Ugyldig JSON: ' + err.message;
+    return;
+  }
+
+  const e = parseInt(parsed.etappe);
+  if (!e || e < 1 || e > 21) {
+    statusEl.style.color = '#ff4444';
+    statusEl.textContent = '❌ Mangler gyldig "etappe" (1-21)';
+    return;
+  }
+
+  const data = getPoeng2026();
+
+  // Points
+  const vals = {};
+  TEAMS.forEach(t => { if (parsed[t.id] !== undefined) vals[t.id] = parseInt(parsed[t.id]) || 0; });
+  if (Object.keys(vals).length > 0) data[e] = vals;
+
+  // Rankings
+  const ranks = {};
+  TEAMS.forEach(t => { if (parsed['rank_'+t.id] !== undefined) ranks[t.id] = parseInt(parsed['rank_'+t.id]); });
+  if (Object.keys(ranks).length > 0) data['rank_'+e] = ranks;
+
+  // Bytter count
+  const bytter = {};
+  TEAMS.forEach(t => { if (parsed['bytter_'+t.id] !== undefined) bytter[t.id] = parseInt(parsed['bytter_'+t.id]); });
+  if (Object.keys(bytter).length > 0) data['bytter_'+e] = bytter;
+
+  // Bytte-detaljer
+  if (Array.isArray(parsed.detaljer) && parsed.detaljer.length > 0) {
+    data['detaljer_'+e] = parsed.detaljer;
+  }
+
+  savePoeng2026(data);
+  document.getElementById('import-json').value = '';
+  statusEl.style.color = '#00cc66';
+  statusEl.textContent = `✅ Etappe ${e} importert!`;
+  setTimeout(() => statusEl.textContent = '', 3000);
+  renderAll();
+}
+
+// Boot — vent på Firebase
+window._appReady = true;
+renderAll(); // render immediately with whatever data we have (empty {} if not yet loaded)
+
+</script>
+</body>
+</html>
